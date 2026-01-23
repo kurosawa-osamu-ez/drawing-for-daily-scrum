@@ -6,6 +6,7 @@ const results = [
   "たぬきち",
   "李",
   "みねやま",
+  "かねこ"
 ];
 
 function getResult() {

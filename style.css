@@ -1,5 +1,5 @@
 * {
-  background: #000;
+  box-sizing: border-box;
 }
 
 h1 {
@@ -9,43 +9,44 @@ h1 {
   color: #fff;
   text-align: center;
   font-size: 60px;
+  margin-top: 0;
 }
 
 h1 span {
-  background-image: -webkit-linear-gradient(
-    315deg,
-    #b8751e 0%,
-    #ffce08 37%,
-    #fefeb2 47%,
-    #fafad6 50%,
-    #fefeb2 53%,
-    #e1ce08 63%,
-    #b8751e 100%
-  );
-  background-image: linear-gradient(
-    135deg,
-    #b8751e 0%,
-    #ffce08 37%,
-    #fefeb2 47%,
-    #fafad6 50%,
-    #fefeb2 53%,
-    #e1ce08 63%,
-    #b8751e 100%
-  );
+  background-image: -webkit-linear-gradient(315deg,
+      #b8751e 0%,
+      #ffce08 37%,
+      #fefeb2 47%,
+      #fafad6 50%,
+      #fefeb2 53%,
+      #e1ce08 63%,
+      #b8751e 100%);
+  background-image: linear-gradient(135deg,
+      #b8751e 0%,
+      #ffce08 37%,
+      #fefeb2 47%,
+      #fafad6 50%,
+      #fefeb2 53%,
+      #e1ce08 63%,
+      #b8751e 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .container {
   margin: 40px 0px;
+  background: transparent;
 }
 
 h2 {
   color: white;
+  background: transparent;
 }
 
 #result {
   font-size: 50px;
+  background: transparent;
 }
 
 .btn,
@@ -70,6 +71,7 @@ button.btn {
   letter-spacing: 0.1em;
   color: #212529;
   border-radius: 0.5rem;
+  background: transparent;
 }
 
 /*背景*/
@@ -81,6 +83,506 @@ body {
   background: #000;
 }
 
+/* 画面ステージ制御 */
+body.stage-setup #roulettePanel,
+body.stage-setup #result-container {
+  display: none;
+}
+
+body.stage-roulette #participantsPanel,
+body.stage-roulette #controls,
+body.stage-roulette #result-container {
+  display: none;
+}
+
+body.stage-result #participantsPanel {
+  display: none;
+}
+
+/* ルーレットの下に結果を出さない */
+#result-container {
+  display: none !important;
+}
+
+/* 演出GIF（画面オーバーレイ） */
+#fxGif.active {
+  opacity: 1;
+  animation: fxGifInOut 1500ms ease-out;
+}
+
+#fxGif img {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  width: 150px;
+  height: auto;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.55));
+}
+
+@keyframes fxGifInOut {
+  0% {
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* パネル（対象者 / ルーレット） */
+.panel {
+  width: min(720px, 96vw);
+  margin: 18px auto;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 206, 8, 0.22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mini-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 206, 8, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.mini-btn:hover {
+  border-color: rgba(255, 206, 8, 0.7);
+  box-shadow: 0 0 20px rgba(255, 206, 8, 0.12);
+}
+
+/* 参加者チェック */
+.participants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  padding: 6px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  cursor: pointer;
+}
+
+.check-item input {
+  width: 18px;
+  height: 18px;
+}
+
+.check-item[data-off="true"] {
+  opacity: 0.45;
+}
+
+.participants-footer {
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+}
+
+/* 縦ルーレット */
+.roulette-window {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 4px solid;
+  border-image: linear-gradient(135deg,
+      #704308 0%,
+      #ffce08 37%,
+      #fefeb2 47%,
+      #fafad6 50%,
+      #fefeb2 53%,
+      #e1ce08 63%,
+      #704308 100%) 1;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 206, 8, 0.10), transparent 40%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.18));
+  box-shadow: 0 0 30px rgba(255, 206, 8, 0.22), inset 0 0 70px rgba(0, 0, 0, 0.75);
+}
+
+.roulette-indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 72px;
+  transform: translateY(-50%);
+  background: rgba(255, 206, 8, 0.12);
+  border-top: 2px solid rgba(255, 206, 8, 0.85);
+  border-bottom: 2px solid rgba(255, 206, 8, 0.85);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.roulette-indicator::before,
+.roulette-indicator::after {
+  content: "▶";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffce08;
+  text-shadow: 0 0 14px rgba(255, 206, 8, 0.9);
+  font-size: 26px;
+}
+
+.roulette-indicator::before {
+  left: 10px;
+}
+
+.roulette-indicator::after {
+  right: 10px;
+  content: "◀";
+}
+
+.roulette-roll {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  transform: translateY(0);
+}
+
+.roulette-item {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.22);
+  background: transparent;
+}
+
+/* 抽選中の雰囲気（淡い光） */
+.is-spinning .roulette-window {
+  animation: rouletteGlow 1.2s ease-in-out infinite;
+}
+
+@keyframes rouletteGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 26px rgba(255, 206, 8, 0.18), inset 0 0 70px rgba(0, 0, 0, 0.75);
+  }
+
+  50% {
+    box-shadow: 0 0 42px rgba(255, 206, 8, 0.34), inset 0 0 70px rgba(0, 0, 0, 0.75);
+  }
+}
+
+/* 演出レイヤー */
+#effects {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+/* 1) 暗転 */
+#fxBlackout.active {
+  animation: blackout 2.5s ease-in-out;
+}
+
+@keyframes blackout {
+  0% {
+    opacity: 0;
+    background: rgba(0, 0, 0, 0);
+  }
+
+  30% {
+    opacity: 1;
+    background: rgba(0, 0, 0, 1);
+  }
+
+  70% {
+    opacity: 1;
+    background: rgba(0, 0, 0, 1);
+  }
+
+  100% {
+    opacity: 0;
+    background: rgba(0, 0, 0, 0);
+  }
+}
+
+/* 2) スポットライト */
+#fxSpotlight.active {
+  opacity: 1;
+  animation: spotlight 1.6s ease-out;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.12) 0%, rgba(0, 0, 0, 0.85) 55%, rgba(0, 0, 0, 0.95) 70%);
+  mix-blend-mode: screen;
+}
+
+@keyframes spotlight {
+  0% {
+    transform: scale(1.15);
+    filter: blur(10px);
+    opacity: 0;
+  }
+
+  40% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.0);
+    filter: blur(0px);
+    opacity: 0;
+  }
+}
+
+/* 3) 雷（フラッシュ） */
+#fxFlash.active {
+  animation: flash 0.55s ease-in-out 3;
+  background: radial-gradient(circle at 40% 30%, rgba(180, 220, 255, 0.85) 0%, transparent 60%);
+}
+
+@keyframes flash {
+
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 4) ゴールドスイープ */
+#fxGold.active {
+  opacity: 1;
+  background: linear-gradient(120deg, transparent 0%, rgba(255, 206, 8, 0.0) 30%, rgba(255, 206, 8, 0.55) 50%, rgba(255, 206, 8, 0.0) 70%, transparent 100%);
+  animation: goldSweep 1.2s ease-out;
+}
+
+@keyframes goldSweep {
+  0% {
+    transform: translateX(-35%) skewX(-10deg);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(35%) skewX(-10deg);
+    opacity: 0;
+  }
+}
+
+/* 5) 星 */
+#fxStars.active {
+  opacity: 1;
+  animation: stars 1.4s ease-out;
+  background:
+    radial-gradient(circle at 25% 35%, rgba(255, 255, 255, 0.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 40%, rgba(255, 255, 255, 0.8) 0 2px, transparent 3px),
+    radial-gradient(circle at 55% 65%, rgba(255, 255, 255, 0.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 20% 75%, rgba(255, 255, 255, 0.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 85% 78%, rgba(255, 255, 255, 0.8) 0 2px, transparent 3px);
+}
+
+@keyframes stars {
+  0% {
+    transform: scale(0.9);
+    filter: blur(6px);
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.05);
+    filter: blur(0);
+    opacity: 0;
+  }
+}
+
+/* 6) 花火（簡易） */
+#fxFireworks.active {
+  opacity: 1;
+  animation: fireworks 1.6s ease-out;
+  background:
+    radial-gradient(circle at 35% 45%, rgba(255, 206, 8, 0.65) 0%, transparent 40%),
+    radial-gradient(circle at 65% 35%, rgba(255, 80, 120, 0.55) 0%, transparent 45%),
+    radial-gradient(circle at 55% 70%, rgba(80, 200, 255, 0.55) 0%, transparent 45%);
+}
+
+@keyframes fireworks {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* 7) 紙吹雪（JSで粒を追加） */
+#confetti.active {
+  opacity: 1;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 16px;
+  opacity: 0.95;
+  transform: translate3d(0, 0, 0) rotate(0deg);
+  animation: confettiFall var(--d, 1400ms) linear forwards;
+  border-radius: 2px;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translate3d(var(--x, 0px), -20px, 0) rotate(0deg);
+  }
+
+  100% {
+    transform: translate3d(var(--x2, 0px), calc(100vh + 20px), 0) rotate(540deg);
+  }
+}
+
+/* 8) 画面シェイク */
+.fx-shake {
+  animation: shake 650ms ease-in-out;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+
+  15% {
+    transform: translateX(-6px);
+  }
+
+  30% {
+    transform: translateX(6px);
+  }
+
+  45% {
+    transform: translateX(-4px);
+  }
+
+  60% {
+    transform: translateX(4px);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* 9) 結果ズーム */
+.fx-zoom #result {
+  animation: zoomPop 900ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes zoomPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.3;
+  }
+
+  60% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 10) グリッチ */
+.fx-glitch #result {
+  position: relative;
+  animation: glitch 900ms steps(2, end);
+  text-shadow: 2px 0 rgba(255, 0, 80, 0.8), -2px 0 rgba(80, 200, 255, 0.8);
+}
+
+@keyframes glitch {
+  0% {
+    clip-path: inset(0 0 0 0);
+  }
+
+  15% {
+    clip-path: inset(10% 0 70% 0);
+  }
+
+  30% {
+    clip-path: inset(60% 0 20% 0);
+  }
+
+  45% {
+    clip-path: inset(20% 0 55% 0);
+  }
+
+  60% {
+    clip-path: inset(75% 0 10% 0);
+  }
+
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* 既存レインボーはそのまま活かす（演出の一種として使用） */
+
 .btn-border-gradient-wrap {
   display: inline-block;
 
@@ -90,26 +592,22 @@ body {
 }
 
 .btn-border-gradient-wrap--gold {
-  background-image: -webkit-linear-gradient(
-    315deg,
-    #704308 0%,
-    #ffce08 37%,
-    #fefeb2 47%,
-    #fafad6 50%,
-    #fefeb2 53%,
-    #e1ce08 63%,
-    #704308 100%
-  );
-  background-image: linear-gradient(
-    135deg,
-    #704308 0%,
-    #ffce08 37%,
-    #fefeb2 47%,
-    #fafad6 50%,
-    #fefeb2 53%,
-    #e1ce08 63%,
-    #704308 100%
-  );
+  background-image: -webkit-linear-gradient(315deg,
+      #704308 0%,
+      #ffce08 37%,
+      #fefeb2 47%,
+      #fafad6 50%,
+      #fefeb2 53%,
+      #e1ce08 63%,
+      #704308 100%);
+  background-image: linear-gradient(135deg,
+      #704308 0%,
+      #ffce08 37%,
+      #fefeb2 47%,
+      #fafad6 50%,
+      #fefeb2 53%,
+      #e1ce08 63%,
+      #704308 100%);
 }
 
 .btn-border-gradient-wrap--gold:hover a.btn {
@@ -127,18 +625,17 @@ a.btn-border-gradient {
   font-family: "ヒラギノ明朝 Pro W3", "Hiragino Mincho Pro",
     "Hiragino Mincho ProN", "HGS明朝E", "ＭＳ Ｐ明朝", serif;
 
-  background: -webkit-gradient(
-    linear,
-    left bottom,
-    left top,
-    from(#ffffdb),
-    to(#a16422)
-  );
+  background: -webkit-gradient(linear,
+      left bottom,
+      left top,
+      from(#ffffdb),
+      to(#a16422));
 
   background: -webkit-linear-gradient(bottom, #ffffdb, #a16422);
 
   background: linear-gradient(to top, #ffffdb, #a16422);
   -webkit-background-clip: text;
+  background-clip: text;
 
   -webkit-text-fill-color: transparent;
 }
@@ -147,28 +644,29 @@ a.btn-border-gradient {
   0% {
     background-position: 0%;
   }
+
   50% {
     background-position: 100%;
   }
+
   100% {
     background-position: 0%;
   }
 }
 
 .rainbow-text {
-  background: linear-gradient(
-    to right,
-    red,
-    orange,
-    yellow,
-    lime,
-    blue,
-    indigo,
-    violet,
-    red
-  );
+  background: linear-gradient(to right,
+      red,
+      orange,
+      yellow,
+      lime,
+      blue,
+      indigo,
+      violet,
+      red);
   background-size: 200%;
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
   animation: rainbow 2s linear infinite;
 }
@@ -177,4 +675,11 @@ a.btn-border-gradient {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 16px;
+}
+
+/* ボタン無効 */
+.btn.disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
